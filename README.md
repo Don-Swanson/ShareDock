@@ -156,7 +156,7 @@ version: '3.8'
 
 services:
   sharedock:
-    image: sharedock:latest
+    image: donswanson/sharedock
     container_name: sharedock
     environment:
       - TZ=UTC
