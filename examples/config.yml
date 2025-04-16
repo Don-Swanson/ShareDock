@@ -1,0 +1,59 @@
+# User authentication configuration
+auth:
+  - user: shareuser
+    group: sharegroup
+    uid: 1000
+    gid: 1000
+    password: userpass
+
+  - user: otheruser
+    group: othergroup
+    uid: 1001
+    gid: 1001
+    password_file: /run/secrets/otheruser_password
+
+# Global Samba settings
+global:
+  - "force user = shareuser"
+  - "force group = sharegroup"
+  - "map to guest = Bad User"
+  - "unix charset = UTF-8"
+  - "dos charset = CP932"
+
+# Share definitions
+share:
+  # Example of a share with both SMB and NFS access
+  - name: shared
+    path: /shares/shared
+    smb:
+      browsable: yes
+      readonly: no
+      guestok: no
+      validusers: shareuser
+      writelist: shareuser
+      veto: no
+    nfs:
+      readonly: false
+      sync: true
+      subtree_check: false
+      all_squash: false
+      anonuid: 1000
+      anongid: 1000
+
+  # Example of an SMB-only share
+  - name: documents
+    path: /shares/documents
+    smb:
+      browsable: yes
+      readonly: yes
+      guestok: no
+      validusers: shareuser otheruser
+
+  # Example of an NFS-only share
+  - name: data
+    path: /shares/data
+    nfs:
+      readonly: false
+      sync: true
+      no_subtree_check: true
+      no_root_squash: true 

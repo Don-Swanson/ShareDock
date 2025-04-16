@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  sharedock:
+    container_name: sharedock
+    image: donswanson/sharedock
+    environment:
+      - TZ=UTC
+      - SAMBA_WORKGROUP=WORKGROUP
+    volumes:
+      - ./data:/data
+      - ./shares:/shares
+      - /lib/modules:/lib/modules:ro  # Needed for NFS kernel module
+      - /proc:/host/proc:ro           # Used to check kernel modules
+    ports:
+      - "445:445"      # SMB
+      - "2049:2049"    # NFS
+      - "111:111/tcp"  # RPC
+      - "111:111/udp"  # RPC
+    cap_add:
+      - SYS_ADMIN     # Required for NFS server
+      - SYS_MODULE    # Required for loading kernel modules
+    privileged: true   # Needed for NFS server (alternatively use specific capabilities)
+    restart: unless-stopped 

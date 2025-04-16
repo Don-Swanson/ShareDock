@@ -1,0 +1,53 @@
+#!/bin/bash
+set -e
+
+echo "Starting ShareDock initialization..."
+
+# Run configuration script
+echo "Configuring services..."
+python3 /etc/cont-init.d/10-config.py
+
+# Start rpcbind
+echo "Starting rpcbind..."
+rpcbind || { echo "Failed to start rpcbind"; exit 1; }
+
+# Set up NFS kernel module and directories
+echo "Setting up NFS filesystems..."
+mkdir -p /proc/fs/nfsd
+mount -t nfsd nfsd /proc/fs/nfsd || { 
+  echo "Warning: Could not mount NFS filesystem. NFS sharing will not work."; 
+  echo "Please ensure the host has the NFS kernel module loaded.";
+  echo "You can still use SMB sharing functionality.";
+}
+
+# Start NFS services only if nfsd mounted successfully
+if [ -d /proc/fs/nfsd ]; then
+  echo "Starting NFS services..."
+  exportfs -a || { echo "Failed to export filesystems"; exit 1; }
+  rpc.statd || { echo "Failed to start statd"; exit 1; }
+  echo "Starting NFS server..."
+  rpc.nfsd || { echo "Failed to start NFS daemon"; exit 1; }
+  echo "Starting mount daemon..."
+  rpc.mountd || { echo "Failed to start mount daemon"; exit 1; }
+  echo "NFS services started successfully."
+else
+  echo "Skipping NFS service startup due to missing kernel modules."
+fi
+
+# Check Samba users 
+echo "Checking Samba users:"
+pdbedit -L -v
+
+# Start Samba with debugging
+echo "Starting Samba..."
+smbd -D --debuglevel=3 || { echo "Failed to start Samba"; exit 1; }
+echo "Samba started successfully."
+
+# List shares for verification
+echo "Available SMB shares:"
+smbclient -L localhost -N
+
+echo "ShareDock initialization complete. Services are running."
+
+# Keep container running
+tail -f /dev/null 
