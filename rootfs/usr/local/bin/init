@@ -41,6 +41,7 @@ pdbedit -L -v
 # Start Samba with debugging
 echo "Starting Samba..."
 smbd -D --debuglevel=3 || { echo "Failed to start Samba"; exit 1; }
+sleep 2
 echo "Samba started successfully."
 
 # List shares for verification
